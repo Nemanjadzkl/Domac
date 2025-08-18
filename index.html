@@ -17,6 +17,7 @@
   <script src="https://cdn.jsdelivr.net/npm/uevent@2/browser.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/photo-sphere-viewer@4/dist/photo-sphere-viewer.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/photo-sphere-viewer@4/dist/plugins/markers.min.js"></script>
 
   <style>
     body, html {
@@ -129,37 +130,45 @@
       let targetTime = 0;
       let currentTime = 0;
 
-      // Inicijalizujemo panoramu odmah, biće sakrivena iza videa
+      // Inicijalizujemo panoramu odmah, i ucitavamo Markers plugin
       const viewer = new PhotoSphereViewer.Viewer({
         container: panoramaSection,
         panorama: "unutrasnjost.jpg",
         defaultLong: 0,
         touchmoveTwoFingers: true,
-        navbar: [ 'zoom', 'fullscreen' ]
+        navbar: [ 'zoom', 'fullscreen' ],
+        plugins: [
+          // Ukljucujemo Markers plugin
+          [PhotoSphereViewer.MarkersPlugin, {}]
+        ]
       });
+
+      // Dobijamo instancu plugina da bismo dodavali markere
+      const markersPlugin = viewer.getPlugin(PhotoSphereViewer.MarkersPlugin);
 
       // Hotspotovi
       const modal = document.getElementById("modal");
-      viewer.addMarker({
+      markersPlugin.addMarker({
         id: "kazani",
         longitude: 0.5, latitude: 0.1,
         image: "https://cdn-icons-png.flaticon.com/512/69/69957.png",
         width: 32, height: 32, tooltip: "Kazani za rakiju",
       });
-      viewer.addMarker({
+      markersPlugin.addMarker({
         id: "album",
         longitude: -0.8, latitude: 0.1,
         image: "https://cdn-icons-png.flaticon.com/512/1250/1250973.png", // Book icon
         width: 32, height: 32, tooltip: "Album sa slikama",
       });
-      viewer.addMarker({
+      markersPlugin.addMarker({
         id: "shelf",
         longitude: -0.7, latitude: 0.3,
         image: "https://cdn-icons-png.flaticon.com/512/30/30449.png", // Bottle icon
         width: 32, height: 32, tooltip: "Polica sa brendom",
       });
 
-      viewer.on("select-marker", (e, marker) => {
+      // Event listener sada ide na plugin
+      markersPlugin.on("select-marker", (e, marker) => {
         if (marker.id === "kazani") {
           modal.style.display="flex";
         } else if (marker.id === "album") {
