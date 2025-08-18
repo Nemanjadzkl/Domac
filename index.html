@@ -249,19 +249,7 @@
         ease: "none"
       });
 
-      // 2. FAZA: Otkrivanje panorame (15% trajanja)
-      masterTimeline.fromTo(video,
-        { // POCETNO STANJE: ceo ekran je vidljiv
-          clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)"
-        },
-        { // KRAJNJE STANJE: "vrata"
-          clipPath: "polygon(35% 10%, 65% 10%, 65% 90%, 35% 90%)",
-          duration: 1.5, // Relativna duzina
-          ease: "power1.in" // Ubrzava na kraju
-        },
-      "-=0.5"); // Pocni malo pre kraja video animacije za glatkiji prelaz
-
-      // 3. FAZA: Nestajanje video okvira (5% trajanja)
+      // 2. FAZA: Nestajanje video okvira (5% trajanja)
       masterTimeline.to("#intro", {
         opacity: 0,
         duration: 0.5, // Relativna duzina
