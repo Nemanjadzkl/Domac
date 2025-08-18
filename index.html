@@ -77,6 +77,35 @@
   <!-- Panorama -->
   <section id="panorama"></section>
 
+  <!-- Brand Shelf Modal -->
+  <div id="shelfModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-lg max-w-lg p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">Polica sa Brendom</h2>
+        <button onclick="closeShelfModal()" class="text-3xl font-light">&times;</button>
+      </div>
+      <p class="text-gray-700">Ovde će biti detaljan prikaz naših proizvoda sa police. Svaka flaša će imati svoju priču, od procesa proizvodnje do degustacionih nota. Uskoro više informacija!</p>
+      <button onclick="closeShelfModal()" class="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg">Zatvori</button>
+    </div>
+  </div>
+
+  <!-- Album Modal -->
+  <div id="albumModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-lg max-w-2xl p-6 w-full">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold">Album sa Slikama</h2>
+        <button onclick="closeAlbumModal()" class="text-3xl font-light">&times;</button>
+      </div>
+      <!-- Slider -->
+      <div class="relative">
+        <img id="albumImage" src="https://placehold.co/800x600/1a1a1a/ffffff?text=Slika+1" alt="Album slika" class="w-full h-96 object-cover rounded-lg">
+        <button onclick="prevImage()" class="absolute left-0 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full ml-2">‹</button>
+        <button onclick="nextImage()" class="absolute right-0 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full mr-2">›</button>
+      </div>
+      <p id="albumCaption" class="text-gray-700 mt-4">Ovo je opis za prvu sliku u albumu.</p>
+    </div>
+  </div>
+
   <!-- Modal -->
   <div id="modal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
     <div class="bg-white rounded-xl shadow-lg max-w-lg p-6">
@@ -109,7 +138,7 @@
         navbar: [ 'zoom', 'fullscreen' ]
       });
 
-      // Hotspot
+      // Hotspotovi
       const modal = document.getElementById("modal");
       viewer.addMarker({
         id: "kazani",
@@ -117,8 +146,27 @@
         image: "https://cdn-icons-png.flaticon.com/512/69/69957.png",
         width: 32, height: 32, tooltip: "Kazani za rakiju",
       });
+      viewer.addMarker({
+        id: "album",
+        longitude: -0.8, latitude: 0.1,
+        image: "https://cdn-icons-png.flaticon.com/512/1250/1250973.png", // Book icon
+        width: 32, height: 32, tooltip: "Album sa slikama",
+      });
+      viewer.addMarker({
+        id: "shelf",
+        longitude: -0.7, latitude: 0.3,
+        image: "https://cdn-icons-png.flaticon.com/512/30/30449.png", // Bottle icon
+        width: 32, height: 32, tooltip: "Polica sa brendom",
+      });
+
       viewer.on("select-marker", (e, marker) => {
-        if(marker.id === "kazani") modal.style.display="flex";
+        if (marker.id === "kazani") {
+          modal.style.display="flex";
+        } else if (marker.id === "album") {
+          document.getElementById("albumModal").style.display = "flex";
+        } else if (marker.id === "shelf") {
+          document.getElementById("shelfModal").style.display = "flex";
+        }
       });
 
       // Loading bar animacija
@@ -190,6 +238,44 @@
     // Modal close
     function closeModal() {
       document.getElementById("modal").style.display="none";
+    }
+
+    // --- Album Slider Logic ---
+    const albumModal = document.getElementById("albumModal");
+    const albumImage = document.getElementById("albumImage");
+    const albumCaption = document.getElementById("albumCaption");
+
+    const albumData = [
+        { src: "https://placehold.co/800x600/1a1a1a/ffffff?text=Slika+1", caption: "Ovo je placeholder opis za prvu sliku." },
+        { src: "https://placehold.co/800x600/3a3a3a/ffffff?text=Slika+2", caption: "Opis za drugu sliku, prikazuje proces proizvodnje." },
+        { src: "https://placehold.co/800x600/5a5a5a/ffffff?text=Slika+3", caption: "Treća slika, naša stara koliba spolja." }
+    ];
+    let currentImageIndex = 0;
+
+    function updateAlbum() {
+        albumImage.src = albumData[currentImageIndex].src;
+        albumCaption.textContent = albumData[currentImageIndex].caption;
+    }
+
+    function nextImage() {
+        currentImageIndex = (currentImageIndex + 1) % albumData.length;
+        updateAlbum();
+    }
+
+    function prevImage() {
+        currentImageIndex = (currentImageIndex - 1 + albumData.length) % albumData.length;
+        updateAlbum();
+    }
+
+    function closeAlbumModal() {
+        albumModal.style.display = "none";
+        // Reset to first image when closing
+        currentImageIndex = 0;
+        updateAlbum();
+    }
+
+    function closeShelfModal() {
+      document.getElementById("shelfModal").style.display = "none";
     }
   </script>
 </body>
