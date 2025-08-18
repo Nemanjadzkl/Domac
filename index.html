@@ -236,12 +236,15 @@
             if (animationCompleted) return;
             animationCompleted = true;
 
-            // Kraj animacije: Sakrij intro i prepusti kontrolu panorami
+            // Odmah unistavamo trigger da sprecimo dalje update-ove
+            self.kill();
+
+            // Nezavisno od trigger-a, radimo fade out animaciju
             gsap.to("#intro", {
                 opacity: 0,
                 duration: 0.5,
                 onComplete: () => {
-                    self.kill();
+                    // Sakrivamo intro element nakon animacije
                     document.getElementById("intro").style.display = "none";
                 }
             });
