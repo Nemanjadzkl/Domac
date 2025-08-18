@@ -90,11 +90,11 @@
     </div>
   </div>
 
-  <!-- Album Modal -->
+  <!-- History Modal -->
   <div id="albumModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
     <div class="bg-white rounded-xl shadow-lg max-w-2xl p-6 w-full">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-2xl font-bold">Album sa Slikama</h2>
+        <h2 class="text-2xl font-bold">Naša Priča</h2>
         <button onclick="closeAlbumModal()" class="text-3xl font-light">&times;</button>
       </div>
       <!-- Slider -->
@@ -134,7 +134,7 @@
       // Inicijalizujemo panoramu odmah, i ucitavamo Markers plugin
       const viewer = new PhotoSphereViewer.Viewer({
         container: panoramaSection,
-        panorama: "unutrasnjost.jpg",
+        panorama: "https://raw.githubusercontent.com/Nemanjadzkl/Domac/main/panorama_360.png",
         defaultLong: 0,
         touchmoveTwoFingers: true,
         navbar: [ 'zoom', 'fullscreen' ],
@@ -151,19 +151,19 @@
       const modal = document.getElementById("modal");
       markersPlugin.addMarker({
         id: "kazani",
-        longitude: 0.5, latitude: 0.1,
-        image: "https://cdn-icons-png.flaticon.com/512/69/69957.png",
-        width: 32, height: 32, tooltip: "Kazani za rakiju",
+        longitude: -0.2, latitude: 0,
+        image: "https://cdn-icons-png.flaticon.com/512/2913/2913986.png", // Press icon
+        width: 40, height: 40, tooltip: "Kazani za rakiju",
       });
       markersPlugin.addMarker({
-        id: "album",
-        longitude: -0.8, latitude: 0.1,
-        image: "https://cdn-icons-png.flaticon.com/512/1250/1250973.png", // Book icon
-        width: 32, height: 32, tooltip: "Album sa slikama",
+        id: "history",
+        longitude: 1.0, latitude: -0.4,
+        image: "https://cdn-icons-png.flaticon.com/512/32/32223.png", // History/scroll icon
+        width: 32, height: 32, tooltip: "Naša Priča",
       });
       markersPlugin.addMarker({
         id: "shelf",
-        longitude: -0.7, latitude: 0.3,
+        longitude: -1.5, latitude: 0.3,
         image: "https://cdn-icons-png.flaticon.com/512/30/30449.png", // Bottle icon
         width: 32, height: 32, tooltip: "Polica sa brendom",
       });
@@ -172,7 +172,7 @@
       markersPlugin.on("select-marker", (e, marker) => {
         if (marker.id === "kazani") {
           modal.style.display="flex";
-        } else if (marker.id === "album") {
+        } else if (marker.id === "history") {
           document.getElementById("albumModal").style.display = "flex";
         } else if (marker.id === "shelf") {
           document.getElementById("shelfModal").style.display = "flex";
