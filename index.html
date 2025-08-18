@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stara Koliba - Intro</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- GSAP + ScrollTrigger -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <!-- PhotoSphereViewer -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/photo-sphere-viewer@4/dist/photo-sphere-viewer.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/uevent@2/browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/photo-sphere-viewer@4/dist/photo-sphere-viewer.js"></script>
+
+  <style>
+    body, html {
+      margin: 0; padding: 0;
+      overflow-x: hidden;
+      background: black;
+    }
+    #intro video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      will-change: contents;
+      display: block;
+    }
+    #intro {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #panorama {
+      width: 100%;
+      height: 100vh;
+      display: none;
+    }
+    #loadingScreen {
+      position: fixed;
+      top:0; left:0;
+      width:100%; height:100%;
+      background:black;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-direction:column;
+      z-index:9999;
+    }
+  </style>
+</head>
+<body class="bg-black">
+
+  <!-- Loading -->
+  <div id="loadingScreen">
+    <div class="text-white mb-4">Učitavanje...</div>
+    <div class="w-64 bg-gray-700 rounded-full h-2.5">
+      <div id="loadingBar" class="bg-green-500 h-2.5 rounded-full w-0"></div>
+    </div>
+  </div>
+
+  <!-- Intro video -->
+  <section id="intro">
+    <video id="introVideo" src="Timeline 1.mp4" preload="auto" playsinline muted></video>
+  </section>
+
+  <!-- Panorama -->
+  <section id="panorama"></section>
+
+  <!-- Modal -->
+  <div id="modal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-lg max-w-lg p-6">
+      <h2 class="text-xl font-bold mb-4">Kazani za rakiju</h2>
+      <p class="text-gray-700">Ovo je demo opis procesa pečenja rakije. Kasnije ovde možemo dodati galeriju i detalje.</p>
+      <button onclick="closeModal()" class="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg">Zatvori</button>
+    </div>
+  </div>
+
+  <script>
+    const video = document.getElementById("introVideo");
+    const loadingScreen = document.getElementById("loadingScreen");
+    const loadingBar = document.getElementById("loadingBar");
+    const panoramaSection = document.getElementById("panorama");
+
+    // ✦ Držimo video pauziran – mi ga kontrolisemo
+    video.pause();
+
+    video.addEventListener("loadedmetadata", () => {
+      let duration = video.duration;
+      let targetTime = 0;   // vrednost GSAP šalje
+      let currentTime = 0;  // frame loop sustiže targetTime
+
+      // Loading bar animacija
+      gsap.to(loadingBar, {
+        width: "100%",
+        duration: 1,
+        onComplete: () => {
+          gsap.to(loadingScreen, {opacity:0, duration:0.5, onComplete:()=> loadingScreen.style.display="none"});
+        }
+      });
+
+      // ✦ Frame loop – glatko kretanje
+      function updateFrame() {
+        currentTime += (targetTime - currentTime) * 0.2; // damping
+        if (Math.abs(targetTime - currentTime) > 0.001) {
+          video.currentTime = Math.min(duration - 0.05, Math.max(0, currentTime));
+        }
+        requestAnimationFrame(updateFrame);
+      }
+      requestAnimationFrame(updateFrame);
+
+      // ✦ GSAP ScrollTrigger
+      gsap.registerPlugin(ScrollTrigger);
+
+      gsap.to({}, {
+        targetTime: duration,
+        ease: "none",
+        scrollTrigger: {
+          trigger: "#intro",
+          start: "top top",
+          end: "+=4000", // dužina skrola
+          scrub: true,
+          pin: true,
+          onUpdate: (self) => {
+            targetTime = self.progress * (duration - 0.05);
+          },
+          onLeave: () => {
+            gsap.to("#intro", {opacity:0, duration:1, onComplete: showPanorama});
+          }
+        }
+      });
+    });
+
+    // ✦ Panorama scena
+    function showPanorama() {
+      document.getElementById("intro").style.display = "none";
+      panoramaSection.style.display = "block";
+
+      const viewer = new PhotoSphereViewer.Viewer({
+        container: panoramaSection,
+        panorama: "unutrasnjost.jpg",
+        defaultYaw: 0,
+        touchmoveTwoFingers: true,
+      });
+
+      // Hotspot primer
+      viewer.addMarker({
+        id: "kazani",
+        longitude: 0.5,
+        latitude: 0.1,
+        image: "https://cdn-icons-png.flaticon.com/512/69/69957.png",
+        width: 32,
+        height: 32,
+        tooltip: "Kazani za rakiju",
+      });
+
+      viewer.on("select-marker", (e, marker) => {
+        if(marker.id === "kazani") {
+          document.getElementById("modal").style.display="flex";
+        }
+      });
+    }
+
+    // Modal close
+    function closeModal() {
+      document.getElementById("modal").style.display="none";
+    }
+  </script>
+</body>
+</html>
