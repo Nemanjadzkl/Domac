@@ -78,15 +78,29 @@
   <!-- Panorama -->
   <section id="panorama"></section>
 
-  <!-- Brand Shelf Modal -->
-  <div id="shelfModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-xl shadow-lg max-w-lg p-6">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-bold">Polica sa Brendom</h2>
-        <button onclick="closeShelfModal()" class="text-3xl font-light">&times;</button>
-      </div>
-      <p class="text-gray-700">Ovde će biti detaljan prikaz naših proizvoda sa police. Svaka flaša će imati svoju priču, od procesa proizvodnje do degustacionih nota. Uskoro više informacija!</p>
-      <button onclick="closeShelfModal()" class="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg">Zatvori</button>
+  <!-- Brand Shelf Panel -->
+  <div id="shelfPanel" class="fixed top-0 right-0 h-full w-full md:w-1/3 bg-black/40 backdrop-blur-lg shadow-2xl p-8 text-white z-50 overflow-y-auto" style="visibility: hidden;">
+    <div class="flex justify-between items-center mb-8">
+        <h2 class="text-2xl font-bold">Naši Proizvodi</h2>
+        <button onclick="closeShelfPanel()" class="text-3xl font-light">&times;</button>
+    </div>
+    <div class="space-y-6">
+        <div>
+            <h3 class="text-lg font-semibold">Domaća Šljivovica</h3>
+            <p class="text-sm text-gray-300">Tradicionalna rakija od šljive, pečena sa ponosom po receptu naših predaka. Odlikuje je punoća ukusa i prepoznatljiva aroma.</p>
+        </div>
+        <div>
+            <h3 class="text-lg font-semibold">Dunjevača Barik</h3>
+            <p class="text-sm text-gray-300">Zlatna dunja odležala u hrastovim buradima, sa bogatom i slojevitom aromom i punoćom ukusa.</p>
+        </div>
+        <div>
+            <h3 class="text-lg font-semibold">Kajsijevača</h3>
+            <p class="text-sm text-gray-300">Nežna i mirisna, ova rakija hvata esenciju zrelih kajsija u svakoj kapi. Lagana i prijatna za svaku priliku.</p>
+        </div>
+        <div>
+            <h3 class="text-lg font-semibold">Viljamovka</h3>
+            <p class="text-sm text-gray-300">Kraljica među rakijama, proizvedena od najsočnijih plodova kruške viljamovke, sa intenzivnim voćnim notama.</p>
+        </div>
     </div>
   </div>
 
@@ -175,7 +189,7 @@
         } else if (marker.id === "history") {
           document.getElementById("albumModal").style.display = "flex";
         } else if (marker.id === "shelf") {
-          document.getElementById("shelfModal").style.display = "flex";
+          openShelfPanel();
         }
       });
 
@@ -200,55 +214,50 @@
 
       gsap.registerPlugin(ScrollTrigger);
 
-      // Jedan ScrollTrigger koji kontroliše celu animaciju u dve faze
-      gsap.to({}, { // Prazan objekat, koristimo samo onUpdate
+      // KREIRANJE MASTER TIMELINE-A
+      // Ovo je robusniji nacin za kontrolu sekvencijalnih animacija
+      // i resava bug sa "crnim pravougaonikom".
+
+      // Jos uvek nam je potreban rAF loop za glatko pomeranje videa.
+      // Timeline ce animirati 'time' properti na ovom objektu.
+      let scrubObject = { time: 0 };
+
+      // Postavljamo pocetno vreme videa na 0
+      video.currentTime = 0;
+
+      const masterTimeline = gsap.timeline({
         scrollTrigger: {
-          id: "main-trigger",
           trigger: '#intro',
           pin: true,
-          scrub: 1,
-          end: () => "+=" + (window.innerHeight * 5), // 5x visina ekrana za ceo proces
-          onUpdate: (self) => {
-            if (animationCompleted) return;
-
-            const videoPhaseEnd = 0.8; // 80% skrola je za video
-
-            if (self.progress < videoPhaseEnd) {
-              // FAZA 1: Puštanje videa
-              targetTime = (self.progress / videoPhaseEnd) * duration;
-              gsap.set(video, { clearProps: 'clipPath' }); // Resetujemo clip-path
-            } else {
-              // FAZA 2: Otkrivanje panorame kroz "vrata"
-              targetTime = duration; // Držimo video na kraju
-
-              const revealProgress = (self.progress - videoPhaseEnd) / (1 - videoPhaseEnd);
-
-              // Animiramo clip-path od centra ka ivicama vrata (približne vrednosti)
-              const startX = 50 - (revealProgress * 15); // 50% -> 35%
-              const endX   = 50 + (revealProgress * 15); // 50% -> 65%
-              const startY = 50 - (revealProgress * 40); // 50% -> 10%
-              const endY   = 50 + (revealProgress * 40); // 50% -> 90%
-
-              video.style.clipPath = `polygon(${startX}% ${startY}%, ${endX}% ${startY}%, ${endX}% ${endY}%, ${startX}% ${endY}%)`;
-            }
-          },
-          onLeave: (self) => {
-            if (animationCompleted) return;
-            animationCompleted = true;
-
-            // Odmah unistavamo trigger da sprecimo dalje update-ove
-            self.kill();
-
-            // Nezavisno od trigger-a, radimo fade out animaciju
-            gsap.to("#intro", {
-                opacity: 0,
-                duration: 0.5,
-                onComplete: () => {
-                    // Sakrivamo intro element nakon animacije
-                    document.getElementById("intro").style.display = "none";
-                }
-            });
+          scrub: 1.5, // Malo sporiji scrub za finiji osecaj
+          end: () => "+=" + (window.innerHeight * 6), // 6x visina ekrana za celu sekvencu
+          onUpdate: () => {
+            // Nasa rAF petlja (updateFrame) ce koristiti ovu vrednost kao cilj
+            targetTime = scrubObject.time;
           }
+        }
+      });
+
+      // 1. FAZA: Animacija videa (80% trajanja timeline-a)
+      masterTimeline.to(scrubObject, {
+        time: duration,
+        duration: 8, // Relativna duzina trajanja u timeline-u
+        ease: "none"
+      });
+
+      // 2. FAZA: Otkrivanje panorame (15% trajanja)
+      masterTimeline.to(video, {
+        clipPath: "polygon(35% 10%, 65% 10%, 65% 90%, 35% 90%)",
+        duration: 1.5, // Relativna duzina
+        ease: "power1.in" // Ubrzava na kraju
+      }, "-=0.5"); // Pocni malo pre kraja video animacije za glatkiji prelaz
+
+      // 3. FAZA: Nestajanje video okvira (5% trajanja)
+      masterTimeline.to("#intro", {
+        opacity: 0,
+        duration: 0.5, // Relativna duzina
+        onComplete: () => {
+          document.getElementById("intro").style.display = "none";
         }
       });
     });
@@ -292,8 +301,33 @@
         updateAlbum();
     }
 
-    function closeShelfModal() {
-      document.getElementById("shelfModal").style.display = "none";
+    const shelfPanel = document.getElementById("shelfPanel");
+    gsap.set(shelfPanel, { xPercent: 100, autoAlpha: 0 }); // Postavi pocetno stanje
+
+    function openShelfPanel() {
+      gsap.to(shelfPanel, {
+        xPercent: 0,
+        autoAlpha: 1,
+        duration: 0.7,
+        ease: "power3.out"
+      });
+      // Sakrij ostale hotspotove
+      markersPlugin.updateMarker({ id: 'kazani', opacity: 0 });
+      markersPlugin.updateMarker({ id: 'history', opacity: 0 });
+      markersPlugin.updateMarker({ id: 'shelf', opacity: 0 });
+    }
+
+    function closeShelfPanel() {
+      gsap.to(shelfPanel, {
+        xPercent: 100,
+        autoAlpha: 0,
+        duration: 0.7,
+        ease: "power3.in"
+      });
+      // Vrati ostale hotspotove
+      markersPlugin.updateMarker({ id: 'kazani', opacity: 1 });
+      markersPlugin.updateMarker({ id: 'history', opacity: 1 });
+      markersPlugin.updateMarker({ id: 'shelf', opacity: 1 });
     }
   </script>
 </body>
