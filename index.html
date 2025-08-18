@@ -124,9 +124,13 @@
   <!-- Modal -->
   <div id="modal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
     <div class="bg-white rounded-xl shadow-lg max-w-lg p-6">
-      <h2 class="text-xl font-bold mb-4">Kazani za rakiju</h2>
-      <p class="text-gray-700">Ovo je demo opis procesa pečenja rakije. Kasnije ovde možemo dodati galeriju i detalje.</p>
-      <button onclick="closeModal()" class="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg">Zatvori</button>
+      <h2 class="text-xl font-bold mb-4">Proces Pečenja Rakije</h2>
+      <div class="text-gray-700 space-y-3">
+        <p>Naša rakija se peče na tradicionalan način, u bakarnim kazanima na drva, gde se tajne zanata prenose sa kolena na koleno.</p>
+        <p><strong>Faza 1: Vrenje (Fermentacija)</strong><br>Pažljivo odabrano, zdravo voće se melje i ostavlja u buradima da fermentira. Ovaj proces, koji traje nekoliko nedelja, ključan je za formiranje arome.</p>
+        <p><strong>Faza 2: Pečenje (Destilacija)</strong><br>Prevrelu kominu prebacujemo u kazan i započinjemo pečenje. Lagana vatra omogućava da se alkoholna para polako odvaja, noseći sa sobom najfinije arome voća.</p>
+      </div>
+      <button onclick="closeModal()" class="mt-6 bg-green-600 text-white px-4 py-2 rounded-lg">Zatvori</button>
     </div>
   </div>
 
@@ -246,11 +250,16 @@
       });
 
       // 2. FAZA: Otkrivanje panorame (15% trajanja)
-      masterTimeline.to(video, {
-        clipPath: "polygon(35% 10%, 65% 10%, 65% 90%, 35% 90%)",
-        duration: 1.5, // Relativna duzina
-        ease: "power1.in" // Ubrzava na kraju
-      }, "-=0.5"); // Pocni malo pre kraja video animacije za glatkiji prelaz
+      masterTimeline.fromTo(video,
+        { // POCETNO STANJE: ceo ekran je vidljiv
+          clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)"
+        },
+        { // KRAJNJE STANJE: "vrata"
+          clipPath: "polygon(35% 10%, 65% 10%, 65% 90%, 35% 90%)",
+          duration: 1.5, // Relativna duzina
+          ease: "power1.in" // Ubrzava na kraju
+        },
+      "-=0.5"); // Pocni malo pre kraja video animacije za glatkiji prelaz
 
       // 3. FAZA: Nestajanje video okvira (5% trajanja)
       masterTimeline.to("#intro", {
