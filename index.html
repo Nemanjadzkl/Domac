@@ -28,19 +28,23 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      will-change: contents;
+      will-change: clip-path;
       display: block;
     }
     #intro {
-      position: relative;
+      position: fixed;
+      top: 0; left: 0;
       width: 100%;
       height: 100vh;
       overflow: hidden;
+      z-index: 2;
     }
     #panorama {
+      position: fixed;
+      top: 0; left: 0;
       width: 100%;
       height: 100vh;
-      display: none;
+      z-index: 1;
     }
     #loadingScreen {
       position: fixed;
@@ -93,8 +97,29 @@
 
     video.addEventListener("loadedmetadata", () => {
       let duration = video.duration;
-      let targetTime = 0;   // vrednost GSAP šalje
-      let currentTime = 0;  // frame loop sustiže targetTime
+      let targetTime = 0;
+      let currentTime = 0;
+
+      // Inicijalizujemo panoramu odmah, biće sakrivena iza videa
+      const viewer = new PhotoSphereViewer.Viewer({
+        container: panoramaSection,
+        panorama: "unutrasnjost.jpg",
+        defaultYaw: 0,
+        touchmoveTwoFingers: true,
+        navbar: [ 'zoom', 'fullscreen' ]
+      });
+
+      // Hotspot
+      const modal = document.getElementById("modal");
+      viewer.addMarker({
+        id: "kazani",
+        longitude: 0.5, latitude: 0.1,
+        image: "https://cdn-icons-png.flaticon.com/512/69/69957.png",
+        width: 32, height: 32, tooltip: "Kazani za rakiju",
+      });
+      viewer.on("select-marker", (e, marker) => {
+        if(marker.id === "kazani") modal.style.display="flex";
+      });
 
       // Loading bar animacija
       gsap.to(loadingBar, {
@@ -105,67 +130,62 @@
         }
       });
 
-      // ✦ Frame loop – glatko kretanje
+      // Frame loop za glatko kretanje videa
       function updateFrame() {
-        currentTime += (targetTime - currentTime) * 0.2; // damping
+        currentTime += (targetTime - currentTime) * 0.1;
         if (Math.abs(targetTime - currentTime) > 0.001) {
-          video.currentTime = Math.min(duration - 0.05, Math.max(0, currentTime));
+          video.currentTime = Math.min(duration, Math.max(0, currentTime));
         }
         requestAnimationFrame(updateFrame);
       }
       requestAnimationFrame(updateFrame);
 
-      // ✦ GSAP ScrollTrigger
       gsap.registerPlugin(ScrollTrigger);
 
-      gsap.to({}, {
-        targetTime: duration,
-        ease: "none",
+      // Jedan ScrollTrigger koji kontroliše celu animaciju u dve faze
+      gsap.to({}, { // Prazan objekat, koristimo samo onUpdate
         scrollTrigger: {
-          trigger: "#intro",
-          start: "top top",
-          end: "+=4000", // dužina skrola
-          scrub: true,
+          id: "main-trigger",
+          trigger: '#intro',
           pin: true,
+          scrub: 1,
+          end: () => "+=" + (window.innerHeight * 5), // 5x visina ekrana za ceo proces
           onUpdate: (self) => {
-            targetTime = self.progress * (duration - 0.05);
+            const videoPhaseEnd = 0.8; // 80% skrola je za video
+
+            if (self.progress < videoPhaseEnd) {
+              // FAZA 1: Puštanje videa
+              targetTime = (self.progress / videoPhaseEnd) * duration;
+              gsap.set(video, { clearProps: 'clipPath' }); // Resetujemo clip-path
+            } else {
+              // FAZA 2: Otkrivanje panorame kroz "vrata"
+              targetTime = duration; // Držimo video na kraju
+
+              const revealProgress = (self.progress - videoPhaseEnd) / (1 - videoPhaseEnd);
+
+              // Animiramo clip-path od centra ka ivicama vrata (približne vrednosti)
+              const startX = 50 - (revealProgress * 15); // 50% -> 35%
+              const endX   = 50 + (revealProgress * 15); // 50% -> 65%
+              const startY = 50 - (revealProgress * 40); // 50% -> 10%
+              const endY   = 50 + (revealProgress * 40); // 50% -> 90%
+
+              video.style.clipPath = `polygon(${startX}% ${startY}%, ${endX}% ${startY}%, ${endX}% ${endY}%, ${startX}% ${endY}%)`;
+            }
           },
-          onLeave: () => {
-            gsap.to("#intro", {opacity:0, duration:1, onComplete: showPanorama});
+          onLeave: (self) => {
+            // Kraj animacije: Sakrij intro i prepusti kontrolu panorami
+            gsap.to("#intro", {
+                opacity: 0,
+                duration: 0.5,
+                onComplete: () => {
+                    self.kill();
+                    document.getElementById("intro").style.display = "none";
+                }
+            });
           }
         }
       });
     });
-
-    // ✦ Panorama scena
-    function showPanorama() {
-      document.getElementById("intro").style.display = "none";
-      panoramaSection.style.display = "block";
-
-      const viewer = new PhotoSphereViewer.Viewer({
-        container: panoramaSection,
-        panorama: "unutrasnjost.jpg",
-        defaultYaw: 0,
-        touchmoveTwoFingers: true,
-      });
-
-      // Hotspot primer
-      viewer.addMarker({
-        id: "kazani",
-        longitude: 0.5,
-        latitude: 0.1,
-        image: "https://cdn-icons-png.flaticon.com/512/69/69957.png",
-        width: 32,
-        height: 32,
-        tooltip: "Kazani za rakiju",
-      });
-
-      viewer.on("select-marker", (e, marker) => {
-        if(marker.id === "kazani") {
-          document.getElementById("modal").style.display="flex";
-        }
-      });
-    }
 
     // Modal close
     function closeModal() {
