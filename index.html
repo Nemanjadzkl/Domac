@@ -172,18 +172,33 @@
         longitude: -0.2, latitude: 0,
         image: "https://cdn-icons-png.flaticon.com/512/2913/2913986.png", // Press icon
         width: 40, height: 40, tooltip: "Kazani za rakiju",
+        className: 'hotspot-marker',
       });
       markersPlugin.addMarker({
         id: "history",
         longitude: 1.0, latitude: -0.4,
         image: "https://cdn-icons-png.flaticon.com/512/32/32223.png", // History/scroll icon
         width: 32, height: 32, tooltip: "Naša Priča",
+        className: 'hotspot-marker',
       });
       markersPlugin.addMarker({
         id: "shelf",
         longitude: -1.5, latitude: 0.3,
         image: "https://cdn-icons-png.flaticon.com/512/30/30449.png", // Bottle icon
         width: 32, height: 32, tooltip: "Polica sa brendom",
+        className: 'hotspot-marker',
+      });
+
+      // Animiramo hotspotove kada je panorama spremna
+      viewer.on('ready', () => {
+        gsap.to('.hotspot-marker', {
+            scale: 1.1,
+            duration: 1,
+            yoyo: true,
+            repeat: -1,
+            ease: "power1.inOut",
+            stagger: 0.2
+        });
       });
 
       // Event listener sada ide na plugin
@@ -242,17 +257,24 @@
         }
       });
 
-      // 1. FAZA: Animacija videa (80% trajanja timeline-a)
+      // 1. FAZA: Animacija videa (70% trajanja timeline-a)
       masterTimeline.to(scrubObject, {
         time: duration,
-        duration: 8, // Relativna duzina trajanja u timeline-u
+        duration: 7, // Relativna duzina trajanja u timeline-u
         ease: "none"
       });
 
-      // 2. FAZA: Nestajanje video okvira (5% trajanja)
+      // 2. FAZA: Zoom-in efekat (15% trajanja)
+      masterTimeline.to("#intro", {
+        scale: 1.2,
+        duration: 1.5,
+        ease: "power1.in"
+      });
+
+      // 3. FAZA: Nestajanje video okvira (15% trajanja)
       masterTimeline.to("#intro", {
         opacity: 0,
-        duration: 0.5, // Relativna duzina
+        duration: 1.5, // Malo duzi fade za glatkiji osecaj
         onComplete: () => {
           document.getElementById("intro").style.display = "none";
         }
@@ -326,6 +348,22 @@
       markersPlugin.updateMarker({ id: 'history', opacity: 1 });
       markersPlugin.updateMarker({ id: 'shelf', opacity: 1 });
     }
+
+    // --- Parallax Effect on Panorama ---
+    const panoramaContainer = document.getElementById('panorama');
+    window.addEventListener('mousemove', (e) => {
+        // Calculate mouse position from -1 to 1 for both axes
+        const x = (e.clientX / window.innerWidth) * 2 - 1;
+        const y = (e.clientY / window.innerHeight) * 2 - 1;
+
+        // Apply a subtle transform to the panorama container
+        gsap.to(panoramaContainer, {
+            x: -x * 15, // Max 15px movement
+            y: -y * 10, // Max 10px movement
+            duration: 0.7,
+            ease: "power2.out"
+        });
+    });
   </script>
 </body>
 </html>
