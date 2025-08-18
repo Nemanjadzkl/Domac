@@ -129,6 +129,7 @@
       let duration = video.duration;
       let targetTime = 0;
       let currentTime = 0;
+      let animationCompleted = false; // Flag to prevent re-animation
 
       // Inicijalizujemo panoramu odmah, i ucitavamo Markers plugin
       const viewer = new PhotoSphereViewer.Viewer({
@@ -208,6 +209,8 @@
           scrub: 1,
           end: () => "+=" + (window.innerHeight * 5), // 5x visina ekrana za ceo proces
           onUpdate: (self) => {
+            if (animationCompleted) return;
+
             const videoPhaseEnd = 0.8; // 80% skrola je za video
 
             if (self.progress < videoPhaseEnd) {
@@ -230,6 +233,9 @@
             }
           },
           onLeave: (self) => {
+            if (animationCompleted) return;
+            animationCompleted = true;
+
             // Kraj animacije: Sakrij intro i prepusti kontrolu panorami
             gsap.to("#intro", {
                 opacity: 0,
